@@ -8,6 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.hongya.bigdata.run.SparkDeployUtils;
 
+import static org.apache.hadoop.yarn.api.records.YarnApplicationState.FINISHED;
+
 public class MonitorThread implements Runnable {
 	private Logger log = LoggerFactory.getLogger(getClass());
 	private ApplicationId appId;
@@ -24,6 +26,20 @@ public class MonitorThread implements Runnable {
 		long interval = 1000;// 更新Application 状态间隔
 		int count =0; // 时间
 		ApplicationReport report = null;
+
+		if (appId == null || appId.toString().equals("local")){
+			for (int i = 0; i <= 100; i++){
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				SparkDeployUtils.updateAppStatus("local", i+"%" );
+
+			}
+			SparkDeployUtils.updateAppStatus("local", FINISHED.name());
+			return;
+		}
 		while (true) {
 			try {
 				Thread.sleep(interval);
@@ -34,12 +50,13 @@ public class MonitorThread implements Runnable {
 				report = client.getApplicationReport(appId);
 			} catch (Exception e) {
 				e.printStackTrace();
+
 			}
 			YarnApplicationState state = report.getYarnApplicationState();
 			log.info("Thread:"+Thread.currentThread().getName()+
 						appId.toString()+"，任务状态是："+state.name());
 			// 完成/ 失败/杀死
-			if (state == YarnApplicationState.FINISHED || state == YarnApplicationState.FAILED
+			if (state == FINISHED || state == YarnApplicationState.FAILED
 					|| state == YarnApplicationState.KILLED) {
 				SparkDeployUtils.cleanupStagingDir(appId);
 				// return (state, report.getFinalApplicationStatus);

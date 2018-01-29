@@ -21,6 +21,8 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.apache.hadoop.yarn.api.records.YarnApplicationState.*;
+
 //import org.apache.hadoop.yarn.api.records.ApplicationReport;
 //import org.apache.hadoop.yarn.api.records.YarnApplicationState;
 
@@ -143,9 +145,14 @@ public class SparkDeployUtils {
                 Method method = clazz.getMethod("main", String[].class);
 
                 method.invoke(clazz, (Object) args);
+
+				new Thread(new MonitorThread(null,null)).start();
                 return "local";
             } catch (IllegalAccessException | InvocationTargetException | ClassNotFoundException | NoSuchMethodException e) {
-                e.printStackTrace();
+
+				SparkDeployUtils.updateAppStatus("local", FAILED.name());
+            	e.printStackTrace();
+
             }
         }
 		StringBuffer buff = new StringBuffer();
