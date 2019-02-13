@@ -93,6 +93,7 @@ public class RunSpark {
 				lambda,
 				iteration
 		};
+		System.setProperty("HADOOP_USER_NAME", "root");
         System.setProperty("spark.master", "local[3]");
 		FileSystem.get(SparkDeployUtils.getConf()).delete(new Path(output), true);
 
